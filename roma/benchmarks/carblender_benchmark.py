@@ -8,8 +8,7 @@ import roma
 from PIL import Image
 
 import mlflow
-mlflow.set_experiment("CardBlenderTrainingRoma")
-mlflow_run = mlflow.start_run()
+mlflow.autolog()
 
 def concatenate_images_horizontally(*images):
     # Get the width and height of each image

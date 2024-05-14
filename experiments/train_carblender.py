@@ -256,4 +256,3 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
     roma.DEBUG_MODE = args.debug_mode
     train(args)
-    mlflow.end_run()
