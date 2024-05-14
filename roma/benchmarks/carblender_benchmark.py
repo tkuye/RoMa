@@ -112,6 +112,7 @@ class CarBlenderBenchmark:
                         # concatenate images
                         all_images = concatenate_images_horizontally(im_a, im_b, vis_warp)
                         mlflow.log_image(all_images, f"image_{idx}_{b}.png")
+                        break ## only log one image
                         
                 gd_tot, pck_1_tot, pck_3_tot, pck_5_tot = (
                     gd_tot + gd.mean(),
