@@ -18,7 +18,7 @@ from roma.models.matcher import *
 from roma.models.transformer import Block, TransformerDecoder, MemEffAttention
 from roma.models.encoders import *
 from roma.checkpointing import CheckPoint
-
+import mlflow
 
 resolutions = {"low":(364, 483), "medium":(728, 966), "high":(1456, 1932)}
 
@@ -256,3 +256,4 @@ if __name__ == "__main__":
     args, _ = parser.parse_known_args()
     roma.DEBUG_MODE = args.debug_mode
     train(args)
+    mlflow.end_run()

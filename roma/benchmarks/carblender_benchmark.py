@@ -5,6 +5,30 @@ from roma.datasets.carblender import CarBlenderBuilder
 from roma.utils import warp_kpts
 from torch.utils.data import ConcatDataset, WeightedRandomSampler
 import roma
+from PIL import Image
+
+import mlflow
+mlflow.set_experiment("CardBlenderTrainingRoma")
+mlflow_run = mlflow.start_run()
+
+def concatenate_images_horizontally(*images):
+    # Get the width and height of each image
+    widths, heights = zip(*(img.size for img in images))
+
+    # Calculate the total width and the maximum height
+    total_width = sum(widths)
+    max_height = max(heights)
+
+    # Create a new blank image with the calculated dimensions
+    new_image = Image.new('RGB', (total_width, max_height))
+
+    # Paste each image into the new image
+    x_offset = 0
+    for img in images:
+        new_image.paste(img, (x_offset, 0))
+        x_offset += img.width
+
+    return new_image
 
 class CarBlenderBenchmark:
     def __init__(self, data_root, h=728, w=966, num_samples = 1000) -> None:
@@ -69,28 +93,27 @@ class CarBlenderBenchmark:
                 gd, pck_1, pck_3, pck_5, prob = self.geometric_dist(
                     depth1, depth2, T_1to2, K1, K2, matches
                 )
-                if roma.DEBUG_MODE:
-                    from roma.utils.utils import tensor_to_pil
-                    import torch.nn.functional as F
-                    path = "vis"
-                    H, W = model.get_output_resolution()
-                    white_im = torch.ones((B,1,H,W),device="cuda")
-                    im_B_transfer_rgb = F.grid_sample(
-                        im_B.cuda(), matches[:,:,:W, 2:], mode="bilinear", align_corners=False
-                    )
-                    warp_im = im_B_transfer_rgb
-                    c_b = certainty[:,None]#(certainty*0.9 + 0.1*torch.ones_like(certainty))[:,None]
-                    vis_im = c_b * warp_im + (1 - c_b) * white_im
+                
+                from roma.utils.utils import tensor_to_pil
+                import torch.nn.functional as F
+                path = "vis"
+                H, W = model.get_output_resolution()
+                white_im = torch.ones((B,1,H,W),device="cuda")
+                im_B_transfer_rgb = F.grid_sample(
+                    im_B.cuda(), matches[:,:,:W, 2:], mode="bilinear", align_corners=False
+                )
+                warp_im = im_B_transfer_rgb
+                c_b = certainty[:,None]#(certainty*0.9 + 0.1*torch.ones_like(certainty))[:,None]
+                vis_im = c_b * warp_im + (1 - c_b) * white_im
+                if idx % 50 == 0:
                     for b in range(B):
-                        import os
-                        os.makedirs(f"{path}/{model.name}/{idx}_{b}_{H}_{W}",exist_ok=True)
-                        tensor_to_pil(vis_im[b], unnormalize=True).save(
-                            f"{path}/{model.name}/{idx}_{b}_{H}_{W}/warp.jpg")
-                        tensor_to_pil(im_A[b].cuda(), unnormalize=True).save(
-                            f"{path}/{model.name}/{idx}_{b}_{H}_{W}/im_A.jpg")
-                        tensor_to_pil(im_B[b].cuda(), unnormalize=True).save(
-                            f"{path}/{model.name}/{idx}_{b}_{H}_{W}/im_B.jpg")
-
+                        vis_warp = tensor_to_pil(vis_im[b], unnormalize=True)
+                        im_a = tensor_to_pil(im_A[b].cuda(), unnormalize=True)
+                        im_b = tensor_to_pil(im_B[b].cuda(), unnormalize=True)
+                        # concatenate images
+                        all_images = concatenate_images_horizontally(im_a, im_b, vis_warp)
+                        mlflow.log_image(all_images, f"image_{idx}_{b}.png")
+                        
                 gd_tot, pck_1_tot, pck_3_tot, pck_5_tot = (
                     gd_tot + gd.mean(),
                     pck_1_tot + pck_1,
