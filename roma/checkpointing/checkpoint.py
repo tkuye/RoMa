@@ -30,8 +30,10 @@ class CheckPoint:
                 "optimizer": optimizer.state_dict(),
                 "lr_scheduler": lr_scheduler.state_dict(),
             }
-            torch.save(states, self.dir + self.name + f"_latest.pth")
-            logger.info(f"Saved states {list(states.keys())}, at step {n}")
+            
+            save_path = os.path.join(self.dir, self.name + f"_step{n}.pth")
+            torch.save(states, save_path)
+            logger.info(f"Saved states {list(states.keys())}, at step {n} to {save_path}")
     
     def load(
         self,
@@ -41,6 +43,7 @@ class CheckPoint:
         n,
         ):
         if os.path.exists(self.dir + self.name + f"_latest.pth") and roma.RANK == 0:
+            save_path = os.path.join(self.dir, self.name + f"_latest.pth")
             states = torch.load(self.dir + self.name + f"_latest.pth")
             if "model" in states:
                 model.load_state_dict(states["model"])

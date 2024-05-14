@@ -7,7 +7,7 @@ from torch.utils.data import ConcatDataset, WeightedRandomSampler
 import roma
 
 class CarBlenderBenchmark:
-    def __init__(self, data_root, h = 360, w = 480, num_samples = 1000) -> None:
+    def __init__(self, data_root, h=728, w=966, num_samples = 1000) -> None:
         carblender = CarBlenderBuilder(data_root, ht=h, wt=w)
         self.dataset = ConcatDataset(
             carblender.build(start=100) ## last 8 scenes

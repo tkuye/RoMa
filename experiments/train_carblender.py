@@ -196,7 +196,7 @@ def train(args):
     N = (32 * 250000)  # 250k steps of batch size 32
     # checkpoint every
     k = 25000 // roma.STEP_SIZE
-    cb_benchmark = CarBlenderBenchmark(args.data_root)
+    cb_benchmark = CarBlenderBenchmark(args.data_root, h=h, w=w)
     use_horizontal_flip_aug = True
     depth_interpolation_mode = "bilinear"
     carblender = CarBlenderBuilder(args.data_root, use_horizontal_flip_aug=use_horizontal_flip_aug, ht=h, wt=w)
@@ -216,7 +216,7 @@ def train(args):
     optimizer = torch.optim.AdamW(parameters, weight_decay=0.01)
     lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(
         optimizer, milestones=[(9*N/roma.STEP_SIZE)//10])
-    
+     
     checkpointer = CheckPoint(checkpoint_dir, experiment_name)
     model, optimizer, lr_scheduler, global_step = checkpointer.load(model, optimizer, lr_scheduler, global_step)
     roma.GLOBAL_STEP = global_step
@@ -237,7 +237,7 @@ def train(args):
             n, k, dataloader, ddp_model, depth_loss, optimizer, lr_scheduler, grad_scaler, grad_clip_norm = grad_clip_norm,
         )
         checkpointer.save(model, optimizer, lr_scheduler, roma.GLOBAL_STEP)
-        wandb.log(cb_benchmark.benchmark(model), step = roma.GLOBAL_STEP)
+        wandb.log(cb_benchmark.benchmark(model, batch_size=1), step = roma.GLOBAL_STEP)
 
 if __name__ == "__main__":
     # os.environ["TORCH_CUDNN_V8_API_ENABLED"] = "1" # For BF16 computations
