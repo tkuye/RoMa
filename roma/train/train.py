@@ -3,6 +3,7 @@ from roma.utils.utils import to_cuda
 import roma
 import torch
 import wandb
+import warnings
 
 def log_param_statistics(named_parameters, norm_type = 2):
     named_parameters = list(named_parameters)
@@ -44,16 +45,17 @@ def train_k_steps(
         batch = next(dataloader)
         model.train(True)
         batch = to_cuda(batch)
-        train_step(
-            train_batch=batch,
-            model=model,
-            objective=objective,
-            optimizer=optimizer,
-            lr_scheduler=lr_scheduler,
-            grad_scaler=grad_scaler,
-            n=n,
-            grad_clip_norm = grad_clip_norm,
-        )
+        with warnings.catch_warnings():
+            train_step(
+                train_batch=batch,
+                model=model,
+                objective=objective,
+                optimizer=optimizer,
+                lr_scheduler=lr_scheduler,
+                grad_scaler=grad_scaler,
+                n=n,
+                grad_clip_norm = grad_clip_norm,
+            )
         if ema_model is not None:
             ema_model.update()
         if warmup is not None:

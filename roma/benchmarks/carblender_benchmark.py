@@ -1,16 +1,16 @@
 import torch
 import numpy as np
 import tqdm
-from roma.datasets import MegadepthBuilder
+from roma.datasets.carblender import CarBlenderBuilder
 from roma.utils import warp_kpts
-from torch.utils.data import ConcatDataset
+from torch.utils.data import ConcatDataset, WeightedRandomSampler
 import roma
 
-class MegadepthDenseBenchmark:
-    def __init__(self, data_root="data/megadepth", h = 384, w = 512, num_samples = 2000) -> None:
-        mega = MegadepthBuilder(data_root=data_root)
+class CarBlenderBenchmark:
+    def __init__(self, h = 360, w = 480, num_samples = 1000) -> None:
+        carblender = CarBlenderBuilder(ht=h, wt=w)
         self.dataset = ConcatDataset(
-            mega.build_scenes(split="test_loftr", ht=h, wt=w)
+            carblender.build(start=100) ## last 8 scenes
         )  # fixed resolution of 384,512
         self.num_samples = num_samples
 
@@ -48,7 +48,7 @@ class MegadepthDenseBenchmark:
             pck_1_tot = 0.0
             pck_3_tot = 0.0
             pck_5_tot = 0.0
-            sampler = torch.utils.data.WeightedRandomSampler(
+            sampler = WeightedRandomSampler(
                 torch.ones(len(self.dataset)), replacement=False, num_samples=self.num_samples
             )
             B = batch_size
