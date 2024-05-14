@@ -7,8 +7,8 @@ from torch.utils.data import ConcatDataset, WeightedRandomSampler
 import roma
 
 class CarBlenderBenchmark:
-    def __init__(self, h = 360, w = 480, num_samples = 1000) -> None:
-        carblender = CarBlenderBuilder(ht=h, wt=w)
+    def __init__(self, data_root, h = 360, w = 480, num_samples = 1000) -> None:
+        carblender = CarBlenderBuilder(data_root, ht=h, wt=w)
         self.dataset = ConcatDataset(
             carblender.build(start=100) ## last 8 scenes
         )  # fixed resolution of 384,512
@@ -99,7 +99,7 @@ class CarBlenderBenchmark:
                 )
         return {
             "epe": gd_tot.item() / len(dataloader),
-            "mega_pck_1": pck_1_tot.item() / len(dataloader),
-            "mega_pck_3": pck_3_tot.item() / len(dataloader),
-            "mega_pck_5": pck_5_tot.item() / len(dataloader),
+            "carblender_pck_1": pck_1_tot.item() / len(dataloader),
+            "carblender_pck_3": pck_3_tot.item() / len(dataloader),
+            "carblender_pck_5": pck_5_tot.item() / len(dataloader),
         }

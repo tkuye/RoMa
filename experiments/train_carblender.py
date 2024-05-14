@@ -196,7 +196,7 @@ def train(args):
     N = (32 * 250000)  # 250k steps of batch size 32
     # checkpoint every
     k = 25000 // roma.STEP_SIZE
-    cb_benchmark = CarBlenderBenchmark()
+    cb_benchmark = CarBlenderBenchmark(args.data_root)
     use_horizontal_flip_aug = True
     depth_interpolation_mode = "bilinear"
     carblender = CarBlenderBuilder(args.data_root, use_horizontal_flip_aug=use_horizontal_flip_aug, ht=h, wt=w)
