@@ -6,7 +6,8 @@ from roma.utils import warp_kpts
 from torch.utils.data import ConcatDataset, WeightedRandomSampler
 import roma
 from PIL import Image
-
+from roma.utils.utils import tensor_to_pil
+import torch.nn.functional as F
 import mlflow
 mlflow.autolog()
 
@@ -92,19 +93,17 @@ class CarBlenderBenchmark:
                 gd, pck_1, pck_3, pck_5, prob = self.geometric_dist(
                     depth1, depth2, T_1to2, K1, K2, matches
                 )
-                
-                from roma.utils.utils import tensor_to_pil
-                import torch.nn.functional as F
-                path = "vis"
-                H, W = model.get_output_resolution()
-                white_im = torch.ones((B,1,H,W),device="cuda")
-                im_B_transfer_rgb = F.grid_sample(
-                    im_B.cuda(), matches[:,:,:W, 2:], mode="bilinear", align_corners=False
-                )
-                warp_im = im_B_transfer_rgb
-                c_b = certainty[:,None]#(certainty*0.9 + 0.1*torch.ones_like(certainty))[:,None]
-                vis_im = c_b * warp_im + (1 - c_b) * white_im
-                if idx % 50 == 0:
+                if roma.RANK == 0 and idx % 50 == 0:
+                    
+                    path = "vis"
+                    H, W = model.get_output_resolution()
+                    white_im = torch.ones((B,1,H,W),device="cuda")
+                    im_B_transfer_rgb = F.grid_sample(
+                        im_B.cuda(), matches[:,:,:W, 2:], mode="bilinear", align_corners=False
+                    )
+                    warp_im = im_B_transfer_rgb
+                    c_b = certainty[:,None]#(certainty*0.9 + 0.1*torch.ones_like(certainty))[:,None]
+                    vis_im = c_b * warp_im + (1 - c_b) * white_im
                     for b in range(B):
                         vis_warp = tensor_to_pil(vis_im[b], unnormalize=True)
                         im_a = tensor_to_pil(im_A[b].cuda(), unnormalize=True)
@@ -112,7 +111,6 @@ class CarBlenderBenchmark:
                         # concatenate images
                         all_images = concatenate_images_horizontally(im_a, im_b, vis_warp)
                         mlflow.log_image(all_images, f"image_{idx}_{b}.png")
-                        break ## only log one image
                         
                 gd_tot, pck_1_tot, pck_3_tot, pck_5_tot = (
                     gd_tot + gd.mean(),
