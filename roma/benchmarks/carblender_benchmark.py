@@ -110,7 +110,7 @@ class CarBlenderBenchmark:
                         im_b = tensor_to_pil(im_B[b].cuda(), unnormalize=True)
                         # concatenate images
                         all_images = concatenate_images_horizontally(im_a, im_b, vis_warp)
-                        mlflow.log_image(all_images, f"image_{idx}_{b}.png")
+                        mlflow.log_image(all_images, f"image_{idx}_{b}_{roma.GLOBAL_STEP}.png")
                         
                 gd_tot, pck_1_tot, pck_3_tot, pck_5_tot = (
                     gd_tot + gd.mean(),
